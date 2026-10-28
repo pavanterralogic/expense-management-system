@@ -1,0 +1,6 @@
+apiVersion: v2
+name: expense-app
+description: Helm chart for Expense Management Django application
+type: application
+version: 0.1.1
+appVersion: "1.1"

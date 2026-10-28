@@ -1,0 +1,26 @@
+replicaCount: 2
+
+nodeSelector:
+  kubernetes.io/hostname: rke2-master
+
+image:
+  repository: pavankv5/expense-app
+  tag: "1.4"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+
+database:
+  host: postgresql
+  port: "5432"
+  name: expensedb
+  user: expenseuser
+  password: REPLACE_VIA_JENKINS_CREDENTIALS
+
+ingress:
+  enabled: true
+  className: traefik
+  host: "expense.example.com"

@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: expense-app-migration
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 3
+
+  template:
+    metadata:
+      labels:
+        app: expense-app-migration
+
+    spec:
+      restartPolicy: Never
+
+      containers:
+        - name: migration
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          command:
+            - /bin/sh
+            - -c
+            - |
+              python manage.py migrate --noinput
+              
+
+          envFrom:
+            - configMapRef:
+                name: expense-app-config
+
+            - secretRef:
+                name: expense-app-secret

@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Expense Management</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 30px;
+            background-color: #f7f7f7;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: auto;
+        }
+
+        .form-container,
+        .search-container,
+        .table-container {
+            background-color: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 6px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        input,
+        textarea,
+        button {
+            padding: 9px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 70px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        button {
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 9px 15px;
+        }
+
+        .form-buttons {
+            grid-column: span 2;
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-button {
+            background-color: #2e7d32;
+            color: white;
+        }
+
+        .clear-button {
+            background-color: #757575;
+            color: white;
+        }
+
+        .search-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-container input {
+            flex: 1;
+        }
+
+        .search-button {
+            background-color: #1976d2;
+            color: white;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #eeeeee;
+        }
+
+        .edit-button {
+            background-color: #f9a825;
+            color: white;
+            margin-right: 5px;
+        }
+
+        .delete-button {
+            background-color: #c62828;
+            color: white;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width,
+            .form-buttons {
+                grid-column: span 1;
+            }
+
+            .search-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <h1>Expense Management</h1>
+
+
+    <!-- ========================= -->
+    <!-- Expense Form -->
+    <!-- ========================= -->
+
+    <div class="form-container">
+
+        <h2>Add / Update Expense</h2>
+
+        <div id="message" class="message"></div>
+
+        <form id="expense-form">
+
+            <div class="form-grid">
+
+                <input
+                    type="text"
+                    id="description"
+                    placeholder="Description"
+                    required
+                >
+
+                <input
+                    type="text"
+                    id="category"
+                    placeholder="Category"
+                    required
+                >
+
+                <input
+                    type="number"
+                    id="amount"
+                    placeholder="Amount"
+                    step="0.01"
+                    min="0"
+                    required
+                >
+
+                <input
+                    type="date"
+                    id="date"
+                    required
+                >
+
+                <input
+                    type="text"
+                    id="payment_method"
+                    placeholder="Payment Method"
+                    required
+                >
+
+                <textarea
+                    id="notes"
+                    placeholder="Notes"
+                    class="full-width"
+                ></textarea>
+
+
+                <div class="form-buttons">
+
+                    <button
+                        type="submit"
+                        class="add-button"
+                        id="submit-button"
+                    >
+                        Add Expense
+                    </button>
+
+                    <button
+                        type="button"
+                        class="clear-button"
+                        onclick="clearForm()"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Search -->
+    <!-- ========================= -->
+
+    <div class="search-container">
+
+        <input
+            type="text"
+            id="search"
+            placeholder="Search by description, category, payment method or notes"
+        >
+
+        <button
+            type="button"
+            class="search-button"
+            onclick="loadExpenses()"
+        >
+            Search
+        </button>
+
+        <button
+            type="button"
+            class="clear-button"
+            onclick="clearSearch()"
+        >
+            Clear Search
+        </button>
+
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Expense Table -->
+    <!-- ========================= -->
+
+    <div class="table-container">
+
+        <h2>Expenses</h2>
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="expense-table-body">
+
+                <!-- Expenses will be loaded here -->
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+ * API endpoint
+ */
+const API_URL = "/api/expenses/";
+
+
+/*
+ * Load expenses
+ *
+ * GET /api/expenses/
+ *
+ * Search:
+ * GET /api/expenses/?search=value
+ */
+async function loadExpenses() {
+
+    try {
+
+        const search =
+            document.getElementById("search").value.trim();
+
+        let url = API_URL;
+
+        if (search) {
+
+            url += "?search=" +
+                encodeURIComponent(search);
+        }
+
+
+        const response =
+            await fetch(url);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to load expenses"
+            );
+        }
+
+
+        const expenses =
+            await response.json();
+
+
+        const tableBody =
+            document.getElementById(
+                "expense-table-body"
+            );
+
+
+        tableBody.innerHTML = "";
+
+
+        if (expenses.length === 0) {
+
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="8">
+                        No expenses found.
+                    </td>
+                </tr>
+            `;
+
+            return;
+        }
+
+
+        expenses.forEach(expense => {
+
+            const row =
+                document.createElement("tr");
+
+
+            row.innerHTML = `
+
+                <td>${expense.id}</td>
+
+                <td>${escapeHtml(
+                    expense.description
+                )}</td>
+
+                <td>${escapeHtml(
+                    expense.category
+                )}</td>
+
+                <td>${expense.amount}</td>
+
+                <td>${expense.date}</td>
+
+                <td>${escapeHtml(
+                    expense.payment_method
+                )}</td>
+
+                <td>${escapeHtml(
+                    expense.notes || ""
+                )}</td>
+
+                <td>
+
+                    <button
+                        class="edit-button"
+                        onclick="editExpense(${expense.id})"
+                    >
+                        Edit
+                    </button>
+
+                    <button
+                        class="delete-button"
+                        onclick="deleteExpense(${expense.id})"
+                    >
+                        Delete
+                    </button>
+
+                </td>
+            `;
+
+
+            tableBody.appendChild(row);
+
+        });
+
+    } catch (error) {
+
+        showMessage(
+            "Failed to load expenses.",
+            true
+        );
+
+        console.error(error);
+    }
+}
+
+
+/*
+ * Add or Update Expense
+ */
+document
+    .getElementById("expense-form")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const editId =
+                this.dataset.editId;
+
+
+            const expense = {
+
+                description:
+                    document.getElementById(
+                        "description"
+                    ).value.trim(),
+
+                category:
+                    document.getElementById(
+                        "category"
+                    ).value.trim(),
+
+                amount:
+                    document.getElementById(
+                        "amount"
+                    ).value,
+
+                date:
+                    document.getElementById(
+                        "date"
+                    ).value,
+
+                payment_method:
+                    document.getElementById(
+                        "payment_method"
+                    ).value.trim(),
+
+                notes:
+                    document.getElementById(
+                        "notes"
+                    ).value.trim()
+            };
+
+
+            try {
+
+                let response;
+
+
+                /*
+                 * Update existing expense
+                 */
+                if (editId) {
+
+                    response =
+                        await fetch(
+                            API_URL +
+                            editId +
+                            "/",
+                            {
+                                method: "PUT",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        expense
+                                    )
+                            }
+                        );
+
+                }
+
+
+                /*
+                 * Add new expense
+                 */
+                else {
+
+                    response =
+                        await fetch(
+                            API_URL,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        expense
+                                    )
+                            }
+                        );
+                }
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Operation failed"
+                    );
+                }
+
+
+                if (editId) {
+
+                    showMessage(
+                        "Expense updated successfully."
+                    );
+
+                } else {
+
+                    showMessage(
+                        "Expense added successfully."
+                    );
+                }
+
+
+                clearForm();
+
+                await loadExpenses();
+
+
+            } catch (error) {
+
+                showMessage(
+                    "Failed to save expense.",
+                    true
+                );
+
+                console.error(error);
+            }
+
+        }
+    );
+
+
+/*
+ * Edit Expense
+ *
+ * GET /api/expenses/<id>/
+ */
+async function editExpense(id) {
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL +
+                id +
+                "/"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to retrieve expense"
+            );
+        }
+
+
+        const expense =
+            await response.json();
+
+
+        document.getElementById(
+            "description"
+        ).value =
+            expense.description;
+
+
+        document.getElementById(
+            "category"
+        ).value =
+            expense.category;
+
+
+        document.getElementById(
+            "amount"
+        ).value =
+            expense.amount;
+
+
+        document.getElementById(
+            "date"
+        ).value =
+            expense.date;
+
+
+        document.getElementById(
+            "payment_method"
+        ).value =
+            expense.payment_method;
+
+
+        document.getElementById(
+            "notes"
+        ).value =
+            expense.notes || "";
+
+
+        /*
+         * Store ID for update
+         */
+        document
+            .getElementById("expense-form")
+            .dataset.editId = id;
+
+
+        /*
+         * Change button text
+         */
+        document.getElementById(
+            "submit-button"
+        ).textContent =
+            "Update Expense";
+
+
+        showMessage(
+            "Editing expense #" + id
+        );
+
+
+    } catch (error) {
+
+        showMessage(
+            "Failed to load expense.",
+            true
+        );
+
+        console.error(error);
+    }
+}
+
+
+/*
+ * Delete Expense
+ *
+ * DELETE /api/expenses/<id>/
+ */
+async function deleteExpense(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete expense #" +
+            id +
+            "?"
+        );
+
+
+    if (!confirmed) {
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL +
+                id +
+                "/",
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Delete failed"
+            );
+        }
+
+
+        showMessage(
+            "Expense deleted successfully."
+        );
+
+
+        await loadExpenses();
+
+
+    } catch (error) {
+
+        showMessage(
+            "Failed to delete expense.",
+            true
+        );
+
+        console.error(error);
+    }
+}
+
+
+/*
+ * Clear form
+ */
+function clearForm() {
+
+    const form =
+        document.getElementById(
+            "expense-form"
+        );
+
+
+    form.reset();
+
+
+    /*
+     * Remove edit ID
+     */
+    delete form.dataset.editId;
+
+
+    /*
+     * Change button back to Add
+     */
+    document.getElementById(
+        "submit-button"
+    ).textContent =
+        "Add Expense";
+}
+
+
+/*
+ * Clear search
+ */
+function clearSearch() {
+
+    document.getElementById(
+        "search"
+    ).value = "";
+
+
+    loadExpenses();
+}
+
+
+/*
+ * Display messages
+ */
+function showMessage(
+    message,
+    isError = false
+) {
+
+    const messageElement =
+        document.getElementById(
+            "message"
+        );
+
+
+    messageElement.textContent =
+        message;
+
+
+    /*
+     * Keep message visible
+     * for a short time
+     */
+    setTimeout(
+        function() {
+
+            messageElement.textContent = "";
+
+        },
+        3000
+    );
+}
+
+
+/*
+ * Basic HTML escaping
+ *
+ * Prevents user-entered text from
+ * being interpreted as HTML.
+ */
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        value;
+
+
+    return div.innerHTML;
+}
+
+
+/*
+ * Load expenses when page opens
+ */
+loadExpenses();
+
+</script>
+
+</body>
+
+</html>

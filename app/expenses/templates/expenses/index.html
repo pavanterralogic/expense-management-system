@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Expense Management</title>
+
+    <style>
+    :root {
+        --green: #16834a;
+        --green-dark: #106638;
+        --green-light: #e8f6ed;
+        --page-bg: #f6f9f7;
+        --white: #ffffff;
+        --text: #172b21;
+        --muted: #718078;
+        --border: #e3ebe6;
+        --red: #c83d45;
+        --shadow: 0 4px 20px rgba(25, 65, 43, 0.05);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        background: var(--page-bg);
+        color: var(--text);
+        font-size: 14px;
+        line-height: 1.5;
+    }
+
+    .container { max-width: 1440px; margin: 0 auto; padding: 32px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 6px; font-size: 30px; letter-spacing: -0.8px; }
+    h2 { margin-bottom: 18px; font-size: 18px; letter-spacing: -0.3px; }
+    .page-subtitle, .muted { color: var(--muted); }
+    .page-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+    .brand-mark {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 44px; height: 44px; margin-right: 14px; border-radius: 13px;
+        background: var(--green-light); color: var(--green); font-size: 23px; font-weight: 800;
+    }
+    .header-brand { display: flex; align-items: center; }
+    .header-brand h1 { margin: 0; }
+    .page-subtitle { margin: 5px 0 0; }
+
+    .panel, .stat-card {
+        background: var(--white); border: 1px solid var(--border);
+        border-radius: 16px; box-shadow: var(--shadow);
+    }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-bottom: 24px; }
+    .stat-card { padding: 22px; }
+    .stat-label { margin-bottom: 12px; color: var(--muted); font-weight: 600; }
+    .stat-value { margin: 0; font-size: 29px; font-weight: 750; letter-spacing: -0.8px; overflow-wrap: anywhere; }
+    .stat-icon {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 38px; height: 38px; margin-bottom: 15px; border-radius: 11px;
+        background: var(--green-light); color: var(--green); font-size: 20px;
+    }
+
+    .dashboard-grid {
+        display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(300px, 1fr);
+        gap: 22px; align-items: start; margin-bottom: 24px;
+    }
+    .panel { min-width: 0; padding: 24px; margin-bottom: 24px; }
+    .panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .panel-heading h2 { margin-bottom: 4px; }
+    .panel-heading p { margin-bottom: 0; color: var(--muted); }
+
+    .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px; }
+    .field { min-width: 0; }
+    .field label { display: block; margin-bottom: 7px; font-weight: 650; color: #35483d; }
+    input, textarea, select, button { font: inherit; }
+    input, textarea, select {
+        width: 100%; min-width: 0; padding: 11px 12px; color: var(--text); background: #fff;
+        border: 1px solid #d9e3dc; border-radius: 9px; outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(22, 131, 74, 0.1); }
+    textarea { min-height: 88px; resize: vertical; }
+    .full-width { grid-column: 1 / -1; }
+    .form-buttons { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; }
+
+    button {
+        min-height: 40px; padding: 10px 16px; border: 1px solid transparent;
+        border-radius: 9px; font-weight: 650; cursor: pointer;
+        transition: background 0.2s, transform 0.15s;
+    }
+    button:hover { transform: translateY(-1px); }
+    .add-button, .search-button { background: var(--green); color: #fff; }
+    .add-button:hover, .search-button:hover { background: var(--green-dark); }
+    .clear-button { background: #f0f4f1; border-color: var(--border); color: #3d5145; }
+    .clear-button:hover { background: #e5ede7; }
+
+    .search-container {
+        display: grid; grid-template-columns: minmax(200px, 2fr) minmax(140px, 1fr) auto auto;
+        gap: 10px; margin-bottom: 20px;
+    }
+    .table-panel { padding: 0; overflow: hidden; }
+    .table-panel .panel-heading { padding: 24px 24px 0; }
+    .table-container { width: 100%; overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+    th, td { padding: 15px 18px; text-align: left; border-bottom: 1px solid #edf1ee; }
+    th { background: #f8faf8; color: #627168; font-size: 12px; font-weight: 750; letter-spacing: 0.45px; text-transform: uppercase; }
+    tbody tr:hover { background: #fbfdfb; }
+    tbody tr:last-child td { border-bottom: none; }
+    .edit-button { margin-right: 6px; background: var(--green-light); color: var(--green-dark); }
+    .delete-button { background: #fff0f0; color: var(--red); }
+    .message { margin-bottom: 16px; color: var(--green-dark); font-weight: 650; }
+    .message.error { color: var(--red); }
+
+    .chart-area {
+        display: flex; align-items: flex-end; justify-content: space-around; gap: 12px;
+        min-height: 190px; padding: 20px 8px 0; border-bottom: 1px solid var(--border);
+    }
+    .chart-column { display: flex; flex: 1; min-width: 0; flex-direction: column; align-items: center; justify-content: flex-end; gap: 8px; height: 175px; }
+    .chart-bar { width: min(42px, 80%); min-height: 4px; border-radius: 7px 7px 2px 2px; background: #7bc99a; transition: height 0.25s; }
+    .chart-bar.current { background: var(--green); }
+    .chart-month { color: var(--muted); font-size: 11px; text-align: center; }
+    .chart-amount { color: var(--text); font-size: 11px; font-weight: 700; text-align: center; overflow-wrap: anywhere; }
+    .chart-empty { padding: 35px 10px; color: var(--muted); text-align: center; }
+
+    @media (max-width: 1000px) {
+        .dashboard-grid { grid-template-columns: 1fr; }
+        .search-container { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 650px) {
+        .container { padding: 18px 12px; }
+        .page-header { align-items: flex-start; }
+        h1 { font-size: 24px; }
+        .stats-grid { grid-template-columns: 1fr; gap: 12px; }
+        .stat-card { padding: 18px; }
+        .stat-value { font-size: 25px; }
+        .panel { padding: 17px; }
+        .form-grid { grid-template-columns: 1fr; }
+        .full-width, .form-buttons { grid-column: 1; }
+        .search-container { grid-template-columns: 1fr; }
+        .table-panel .panel-heading { padding: 18px 17px 0; }
+    }
+</style>
+</head>
+
+
+<body>
+
+<div class="container">
+
+    <!-- Dashboard Header -->
+    <header class="page-header">
+        <div class="header-brand">
+            <div class="brand-mark">₹</div>
+            <div>
+                <h1>Expense Dashboard</h1>
+                <p class="page-subtitle">Track your spending and manage your expenses.</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Summary Cards -->
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">₹</div>
+            <div class="stat-label">Total Expenses</div>
+            <p class="stat-value" id="total-expenses">₹0.00</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">↗</div>
+            <div class="stat-label">This Month</div>
+            <p class="stat-value" id="monthly-expenses">₹0.00</p>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">▤</div>
+            <div class="stat-label">Number of Records</div>
+            <p class="stat-value" id="expense-count">0</p>
+        </div>
+    </section>
+
+
+    <!-- ========================= -->
+    <!-- Expense Form -->
+    <!-- ========================= -->
+
+    <section class="dashboard-grid">
+    <div class="panel form-container">
+
+        <div class="panel-heading">
+            <div>
+                <h2>Add an Expense</h2>
+                <p>Record a new payment or update an existing expense.</p>
+            </div>
+        </div>
+
+        <div id="message" class="message"></div>
+
+        <form id="expense-form">
+
+            <div class="form-grid">
+
+                <div class="field">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" placeholder="e.g. Grocery shopping" required>
+                </div>
+
+                <div class="field">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" placeholder="e.g. Food" required>
+                </div>
+
+                <div class="field">
+                    <label for="amount">Amount (₹)</label>
+                    <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+
+                <div class="field">
+                    <label for="date">Date</label>
+                    <input type="date" id="date" required>
+                </div>
+
+                <div class="field">
+                    <label for="payment_method">Payment Method</label>
+                    <input type="text" id="payment_method" placeholder="e.g. UPI, Cash, Card" required>
+                </div>
+
+                <div class="field full-width">
+                    <label for="notes">Notes (optional)</label>
+                    <textarea id="notes" placeholder="Add any extra details..."></textarea>
+                </div>
+
+
+                <div class="form-buttons">
+
+                    <button
+                        type="submit"
+                        class="add-button"
+                        id="submit-button"
+                    >
+                        Add Expense
+                    </button>
+
+                    <button
+                        type="button"
+                        class="clear-button"
+                        onclick="clearForm()"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+    <!-- Monthly Spending Chart -->
+    <section class="panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Monthly Spending</h2>
+                <p>Your spending over the last six months.</p>
+            </div>
+        </div>
+        <div id="monthly-chart" class="chart-area" aria-label="Monthly spending chart"></div>
+    </section>
+    </section>
+
+    <!-- ========================= -->
+    <!-- Search -->
+    <!-- ========================= -->
+
+    <div class="panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Find an Expense</h2>
+                <p>Search your records and filter by category.</p>
+            </div>
+        </div>
+        <div class="search-container">
+            <input type="text" id="search"
+                   placeholder="Search description, category, payment method or notes"
+                   aria-label="Search expenses">
+            <select id="category-filter" aria-label="Filter by category">
+                <option value="">All categories</option>
+            </select>
+            <button type="button" class="search-button" onclick="applyExpenseFilters()">Search</button>
+            <button type="button" class="clear-button" onclick="clearSearch()">Reset</button>
+        </div>
+    </div>
+
+
+    <!-- ========================= -->
+    <!-- Expense Table -->
+    <!-- ========================= -->
+
+    <section class="panel table-panel">
+        <div class="panel-heading">
+            <div>
+                <h2>Expense Records</h2>
+                <p class="muted">Review, edit, or delete your transactions.</p>
+            </div>
+        </div>
+        <div class="table-container">
+
+        <table>
+
+            <thead>
+
+                <tr>
+                    <th>ID</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th>Notes</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody id="expense-table-body">
+
+                <!-- Expenses will be loaded here -->
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/*
+ * API endpoint
+ */
+const API_URL = "/api/expenses/";
+
+
+/*
+ * Load expenses
+ *
+ * GET /api/expenses/
+ *
+ * Search:
+ * GET /api/expenses/?search=value
+ */
+async function loadExpenses() {
+    try {
+        const response = await fetch(API_URL);
+
+        if (!response.ok) {
+            throw new Error("Failed to load expenses");
+        }
+
+        const expenses = await response.json();
+        allExpenses = Array.isArray(expenses) ? expenses : [];
+
+        updateDashboard(allExpenses);
+        applyExpenseFilters();
+    } catch (error) {
+        showMessage("Failed to load expenses.", true);
+        console.error(error);
+    }
+}
+
+function renderExpenseRows(expenses) {
+    const tableBody = document.getElementById("expense-table-body");
+    tableBody.innerHTML = "";
+
+    if (!expenses.length) {
+        tableBody.innerHTML = `
+            <tr><td colspan="8">No expenses found.</td></tr>
+        `;
+        return;
+    }
+
+    expenses.forEach(expense => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${expense.id}</td>
+            <td>${escapeHtml(String(expense.description || ""))}</td>
+            <td>${escapeHtml(String(expense.category || ""))}</td>
+            <td>${escapeHtml(formatCurrency(expense.amount))}</td>
+            <td>${escapeHtml(String(expense.date || ""))}</td>
+            <td>${escapeHtml(String(expense.payment_method || ""))}</td>
+            <td>${escapeHtml(String(expense.notes || ""))}</td>
+            <td>
+                <button class="edit-button" onclick="editExpense(${Number(expense.id)})">Edit</button>
+                <button class="delete-button" onclick="deleteExpense(${Number(expense.id)})">Delete</button>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+/*
+ * Add or Update Expense
+ */
+document
+    .getElementById("expense-form")
+    .addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            const editId =
+                this.dataset.editId;
+
+
+            const expense = {
+
+                description:
+                    document.getElementById(
+                        "description"
+                    ).value.trim(),
+
+                category:
+                    document.getElementById(
+                        "category"
+                    ).value.trim(),
+
+                amount:
+                    document.getElementById(
+                        "amount"
+                    ).value,
+
+                date:
+                    document.getElementById(
+                        "date"
+                    ).value,
+
+                payment_method:
+                    document.getElementById(
+                        "payment_method"
+                    ).value.trim(),
+
+                notes:
+                    document.getElementById(
+                        "notes"
+                    ).value.trim()
+            };
+
+
+            try {
+
+                let response;
+
+
+                /*
+                 * Update existing expense
+                 */
+                if (editId) {
+
+                    response =
+                        await fetch(
+                            API_URL +
+                            editId +
+                            "/",
+                            {
+                                method: "PUT",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        expense
+                                    )
+                            }
+                        );
+
+                }
+
+
+                /*
+                 * Add new expense
+                 */
+                else {
+
+                    response =
+                        await fetch(
+                            API_URL,
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify(
+                                        expense
+                                    )
+                            }
+                        );
+                }
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        "Operation failed"
+                    );
+                }
+
+
+                if (editId) {
+
+                    showMessage(
+                        "Expense updated successfully."
+                    );
+
+                } else {
+
+                    showMessage(
+                        "Expense added successfully."
+                    );
+                }
+
+
+                clearForm();
+
+                await loadExpenses();
+
+
+            } catch (error) {
+
+                showMessage(
+                    "Failed to save expense.",
+                    true
+                );
+
+                console.error(error);
+            }
+
+        }
+    );
+
+
+/*
+ * Edit Expense
+ *
+ * GET /api/expenses/<id>/
+ */
+async function editExpense(id) {
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL +
+                id +
+                "/"
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Failed to retrieve expense"
+            );
+        }
+
+
+        const expense =
+            await response.json();
+
+
+        document.getElementById(
+            "description"
+        ).value =
+            expense.description;
+
+
+        document.getElementById(
+            "category"
+        ).value =
+            expense.category;
+
+
+        document.getElementById(
+            "amount"
+        ).value =
+            expense.amount;
+
+
+        document.getElementById(
+            "date"
+        ).value =
+            expense.date;
+
+
+        document.getElementById(
+            "payment_method"
+        ).value =
+            expense.payment_method;
+
+
+        document.getElementById(
+            "notes"
+        ).value =
+            expense.notes || "";
+
+
+        /*
+         * Store ID for update
+         */
+        document
+            .getElementById("expense-form")
+            .dataset.editId = id;
+
+
+        /*
+         * Change button text
+         */
+        document.getElementById(
+            "submit-button"
+        ).textContent =
+            "Update Expense";
+
+
+        showMessage(
+            "Editing expense #" + id
+        );
+
+
+    } catch (error) {
+
+        showMessage(
+            "Failed to load expense.",
+            true
+        );
+
+        console.error(error);
+    }
+}
+
+
+/*
+ * Delete Expense
+ *
+ * DELETE /api/expenses/<id>/
+ */
+async function deleteExpense(id) {
+
+    const confirmed =
+        confirm(
+            "Are you sure you want to delete expense #" +
+            id +
+            "?"
+        );
+
+
+    if (!confirmed) {
+
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                API_URL +
+                id +
+                "/",
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Delete failed"
+            );
+        }
+
+
+        showMessage(
+            "Expense deleted successfully."
+        );
+
+
+        await loadExpenses();
+
+
+    } catch (error) {
+
+        showMessage(
+            "Failed to delete expense.",
+            true
+        );
+
+        console.error(error);
+    }
+}
+
+
+/*
+ * Clear form
+ */
+function clearForm() {
+
+    const form =
+        document.getElementById(
+            "expense-form"
+        );
+
+
+    form.reset();
+
+
+    /*
+     * Remove edit ID
+     */
+    delete form.dataset.editId;
+
+
+    /*
+     * Change button back to Add
+     */
+    document.getElementById(
+        "submit-button"
+    ).textContent =
+        "Add Expense";
+}
+
+
+/*
+ * Clear search
+ */
+function clearSearch() {
+
+    document.getElementById(
+        "search"
+    ).value = "";
+
+
+    applyExpenseFilters();
+}
+
+
+/*
+ * Display messages
+ */
+function showMessage(
+    message,
+    isError = false
+) {
+
+    const messageElement =
+        document.getElementById(
+            "message"
+        );
+
+
+    messageElement.textContent = message;
+    messageElement.classList.toggle("error", isError);
+
+
+    /*
+     * Keep message visible
+     * for a short time
+     */
+    setTimeout(
+        function() {
+
+            messageElement.textContent = "";
+
+        },
+        3000
+    );
+}
+
+
+/*
+ * Basic HTML escaping
+ *
+ * Prevents user-entered text from
+ * being interpreted as HTML.
+ */
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
+
+
+    div.textContent =
+        value;
+
+
+    return div.innerHTML;
+}
+
+
+/*
+ * Dashboard summaries and monthly chart.
+ * Uses the existing expenses API; no backend route changes required.
+ */
+let allExpenses = [];
+
+function formatCurrency(value) {
+    const amount = Number(value) || 0;
+    return new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+        maximumFractionDigits: 2
+    }).format(amount);
+}
+
+function parseExpenseDate(value) {
+    if (!value) return null;
+    const parts = String(value).slice(0, 10).split("-");
+    if (parts.length !== 3) return null;
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function updateDashboard(expenses) {
+    const total = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+    const now = new Date();
+    const monthTotal = expenses.reduce((sum, expense) => {
+        const date = parseExpenseDate(expense.date);
+        return date && date.getFullYear() === now.getFullYear() &&
+            date.getMonth() === now.getMonth()
+            ? sum + (Number(expense.amount) || 0) : sum;
+    }, 0);
+
+    document.getElementById("total-expenses").textContent = formatCurrency(total);
+    document.getElementById("monthly-expenses").textContent = formatCurrency(monthTotal);
+    document.getElementById("expense-count").textContent = String(expenses.length);
+
+    updateCategoryOptions(allExpenses);
+    renderMonthlyChart(allExpenses);
+}
+
+function updateCategoryOptions(expenses) {
+    const select = document.getElementById("category-filter");
+    if (!select) return;
+
+    const previousValue = select.value;
+    const categories = [...new Set(expenses.map(item => String(item.category || "").trim()).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b));
+
+    select.innerHTML = '<option value="">All categories</option>';
+    categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category;
+        option.textContent = category;
+        select.appendChild(option);
+    });
+
+    if (categories.includes(previousValue)) select.value = previousValue;
+}
+
+function renderMonthlyChart(expenses) {
+    const chart = document.getElementById("monthly-chart");
+    if (!chart) return;
+
+    const now = new Date();
+    const months = [];
+    for (let offset = 5; offset >= 0; offset--) {
+        const date = new Date(now.getFullYear(), now.getMonth() - offset, 1);
+        months.push({
+            year: date.getFullYear(),
+            month: date.getMonth(),
+            label: date.toLocaleDateString("en-IN", { month: "short" }),
+            total: 0
+        });
+    }
+
+    expenses.forEach(expense => {
+        const date = parseExpenseDate(expense.date);
+        if (!date) return;
+        const month = months.find(item =>
+            item.year === date.getFullYear() && item.month === date.getMonth()
+        );
+        if (month) month.total += Number(expense.amount) || 0;
+    });
+
+    const maxTotal = Math.max(...months.map(item => item.total), 1);
+    chart.innerHTML = "";
+
+    if (!expenses.length) {
+        chart.innerHTML = '<div class="chart-empty">Add an expense to see your monthly spending.</div>';
+        return;
+    }
+
+    months.forEach((month, index) => {
+        const column = document.createElement("div");
+        column.className = "chart-column";
+
+        const amount = document.createElement("div");
+        amount.className = "chart-amount";
+        amount.textContent = month.total > 0
+            ? new Intl.NumberFormat("en-IN", { notation: "compact", maximumFractionDigits: 1 }).format(month.total)
+            : "₹0";
+
+        const bar = document.createElement("div");
+        bar.className = "chart-bar" + (index === months.length - 1 ? " current" : "");
+        bar.style.height = Math.max(month.total > 0 ? 8 : 4, (month.total / maxTotal) * 105) + "px";
+        bar.title = month.label + ": " + formatCurrency(month.total);
+
+        const label = document.createElement("div");
+        label.className = "chart-month";
+        label.textContent = month.label;
+
+        column.appendChild(amount);
+        column.appendChild(bar);
+        column.appendChild(label);
+        chart.appendChild(column);
+    });
+}
+
+document.getElementById("category-filter").addEventListener("change", function() {
+    applyExpenseFilters();
+});
+
+function applyExpenseFilters() {
+    const category = document.getElementById("category-filter").value;
+    const query = document.getElementById("search").value.trim().toLowerCase();
+    const filtered = allExpenses.filter(expense => {
+        const matchesCategory = !category || String(expense.category || "") === category;
+        const searchable = [
+            expense.description, expense.category, expense.payment_method, expense.notes
+        ].map(value => String(value || "").toLowerCase()).join(" ");
+        return matchesCategory && (!query || searchable.includes(query));
+    });
+    renderExpenseRows(filtered);
+    updateVisibleSummary(filtered);
+}
+
+function updateVisibleSummary(expenses) {
+    const total = expenses.reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
+    const now = new Date();
+    const monthTotal = expenses.reduce((sum, expense) => {
+        const date = parseExpenseDate(expense.date);
+        return date && date.getFullYear() === now.getFullYear() &&
+            date.getMonth() === now.getMonth()
+            ? sum + (Number(expense.amount) || 0) : sum;
+    }, 0);
+    document.getElementById("total-expenses").textContent = formatCurrency(total);
+    document.getElementById("monthly-expenses").textContent = formatCurrency(monthTotal);
+    document.getElementById("expense-count").textContent = String(expenses.length);
+}
+
+/*
+ * Load expenses when page opens
+ */
+loadExpenses();
+
+</script>
+
+</body>
+
+</html>
