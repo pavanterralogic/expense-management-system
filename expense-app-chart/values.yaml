@@ -24,3 +24,4 @@ ingress:
   enabled: true
   className: traefik
   host: "expense.example.com"
+djangoSecretKey: ""
