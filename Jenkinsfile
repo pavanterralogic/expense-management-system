@@ -26,12 +26,16 @@ pipeline {
     }
     stage('Deploy') {
       steps {
-        withCredentials([string(credentialsId: 'expense-db-password', variable: 'DB_PASS')]) {
+        withCredentials([
+          string(credentialsId: 'expense-db-password', variable: 'DB_PASS'),
+          string(credentialsId: 'django-secret-key', variable: 'DJANGO_KEY')
+        ]) {
           sh '''
             helm upgrade --install expense-app expense-app-chart \
               -n $NAMESPACE --reuse-values \
               --set image.tag=$TAG \
               --set database.password="$DB_PASS" \
+              --set-string djangoSecretKey="$DJANGO_KEY" \
               --wait --timeout 5m
           '''
         }
